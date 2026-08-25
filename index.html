@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>PREP Study Plan — IELTS Nền tảng & Lập trình</title>
-<meta name="description" content="Dashboard Study Plan học tiếng Anh thông minh chuẩn PREP.vn, tối ưu 100% cho điện thoại và máy tính, tích hợp từ khóa ngữ cảnh lập trình, đánh giá độ khó 1-5 sao.">
+<meta name="description" content="Dashboard Study Plan học tiếng Anh thông minh chuẩn PREP.vn, tối ưu 100% cho điện thoại và máy tính, tích hợp từ khóa ngữ cảnh lập trình, đánh giá độ khó 1-5 sao, tự động lưu vĩnh viễn.">
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -927,6 +927,7 @@ button, input, select, textarea {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-card);
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .btn-back-plan {
@@ -954,6 +955,49 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Big Save Button */
+.btn-manual-save {
+  background: #00b074;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0, 176, 116, 0.25);
+  transition: all 0.15s;
+}
+.btn-manual-save:hover {
+  background: #009663;
+  transform: translateY(-1px);
+}
+.btn-manual-save:active {
+  transform: scale(0.96);
+}
+
+.save-status-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #00b074;
+  background: #e6f7f1;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #a3e9d2;
+}
+[data-theme="dark"] .save-status-pill {
+  background: #12281a;
+  color: #3fb950;
+  border-color: #1e4b27;
 }
 
 /* Note Header Card */
@@ -1847,6 +1891,12 @@ button, input, select, textarea {
           </button>
           
           <div class="workspace-actions-right">
+            <span class="save-status-pill" id="saveStatusIndicator">
+              🟢 Đã lưu vào máy
+            </span>
+            <button class="btn-manual-save" onclick="manualSaveNote()">
+              💾 Lưu Ghi Chú
+            </button>
             <button class="btn-track-list" style="background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border);" onclick="togglePomodoro()">
               ⏱️ <span id="pomoTimerText">25:00</span>
             </button>
@@ -2050,6 +2100,7 @@ const INITIAL_SESSIONS = [
 ];
 
 // ── STATE ──────────────────────────────────────────────────
+const STORAGE_KEY = 'prep_study_clean_v4';
 let sessions = [];
 let activeSessionId = null;
 let activeSkillFilter = 'ALL';
@@ -2078,15 +2129,17 @@ function toggleTheme() {
   toast(next === 'dark' ? '🌙 Đã bật chế độ Tối' : '☀️ Đã bật chế độ Sáng');
 }
 
-// ── INITIALIZE STUDY PLAN ──────────────────────────────────
+// ── INITIALIZE STUDY PLAN WITH ROBUST PERSISTENCE ──────────
 async function initStudyPlan() {
-  const cached = localStorage.getItem('prep_study_clean_v3');
+  // 1. First priority: Load from localStorage
+  const cached = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('prep_study_clean_v3') || localStorage.getItem('prep_study_clean_v2');
   if (cached) {
     try {
       sessions = JSON.parse(cached);
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error('Error parsing local storage:', e); }
   }
 
+  // 2. If nothing cached, build initial structure
   if (!sessions || !sessions.length) {
     sessions = INITIAL_SESSIONS.map((s, idx) => ({
       id: idx + 1,
@@ -2105,27 +2158,44 @@ async function initStudyPlan() {
     }));
   }
 
-  // Load from Supabase to merge user's existing saved notes
+  renderDashboard();
+
+  // 3. Background: Sync and merge from Supabase without destroying unsaved local changes
   try {
     const { data, error } = await db.from('notes').select('*');
     if (!error && data && data.length) {
+      let hasSupabaseUpdate = false;
       data.forEach(n => {
         const idx = sessions.findIndex(s => s.session === n.id || s.title === n.title);
         if (idx !== -1) {
-          sessions[idx].status = n.status || sessions[idx].status;
-          sessions[idx].cups = n.cups !== undefined ? n.cups : sessions[idx].cups;
-          if (n.custom_sections) {
-            sessions[idx].sections = safeJSON(n.custom_sections);
+          // If local has no sections but Supabase has saved sections, restore from Supabase
+          const supaSections = safeJSON(n.custom_sections);
+          if ((!sessions[idx].sections || sessions[idx].sections.length === 0) && supaSections.length > 0) {
+            sessions[idx].sections = supaSections;
+            hasSupabaseUpdate = true;
           }
+          if (n.cups !== undefined) sessions[idx].cups = n.cups;
+          if (n.status) sessions[idx].status = n.status;
         }
       });
+      if (hasSupabaseUpdate) {
+        saveSessionsLocal();
+        renderDashboard();
+      }
     }
   } catch (err) {
     console.log('Supabase fetch notice:', err);
   }
 
-  saveSessionsLocal();
-  renderDashboard();
+  // Check if there was an active session open before reload
+  const lastActive = localStorage.getItem('prep_last_active_session');
+  if (lastActive) {
+    const sId = parseInt(lastActive, 10);
+    const exists = sessions.find(s => s.session === sId);
+    if (exists && exists.sections && exists.sections.length > 0) {
+      openSessionDetail(sId);
+    }
+  }
 }
 
 function safeJSON(val) {
@@ -2135,7 +2205,14 @@ function safeJSON(val) {
 }
 
 function saveSessionsLocal() {
-  localStorage.setItem('prep_study_clean_v3', JSON.stringify(sessions));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    if (activeSessionId) {
+      localStorage.setItem('prep_last_active_session', String(activeSessionId));
+    }
+  } catch(e) {
+    console.error('LocalStorage write error:', e);
+  }
 }
 
 // ── RENDER DASHBOARD STUDY PLAN ────────────────────────────
@@ -2296,6 +2373,8 @@ function openSessionDetail(sessionId) {
   document.getElementById('wDate').value = s.dateStr || '';
 
   renderSectionsTiles();
+  setSaveBadge('🟢 Đã lưu vào máy', '#00b074');
+  saveSessionsLocal();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -2528,6 +2607,7 @@ function toggleSectionTile(idx) {
   const s = sessions.find(x => x.session === activeSessionId);
   if (s && s.sections && s.sections[idx]) {
     s.sections[idx].isOpen = !s.sections[idx].isOpen;
+    saveSessionsLocal();
     renderSectionsTiles();
   }
 }
@@ -2558,6 +2638,7 @@ function updateSecTitle(idx, val) {
   const s = sessions.find(x => x.session === activeSessionId);
   if (s && s.sections && s.sections[idx]) {
     s.sections[idx].title = val;
+    saveSessionsLocal();
     scheduleCloudSync();
   }
 }
@@ -2566,6 +2647,8 @@ function updateQuadField(secIdx, field, val) {
   const s = sessions.find(x => x.session === activeSessionId);
   if (s && s.sections && s.sections[secIdx]) {
     s.sections[secIdx][field] = val;
+    saveSessionsLocal(); // ALWAYS SAVE TO LOCAL STORAGE IMMEDIATELY
+    setSaveBadge('🟡 Đang đồng bộ...', '#f59e0b');
     scheduleCloudSync();
   }
 }
@@ -2575,8 +2658,9 @@ function setSectionDifficulty(secIdx, stars) {
   if (s && s.sections && s.sections[secIdx]) {
     s.sections[secIdx].difficulty = (s.sections[secIdx].difficulty === stars) ? 0 : stars;
     s.difficulty = s.sections[secIdx].difficulty;
+    saveSessionsLocal();
     renderSectionsTiles();
-    autoSaveNote();
+    scheduleCloudSync();
     toast(`⭐ Đã chọn: ${s.sections[secIdx].difficulty}/5 sao`);
   }
 }
@@ -2586,6 +2670,7 @@ function updateSecRelatedUnits(secIdx, val) {
   if (s && s.sections && s.sections[secIdx]) {
     s.sections[secIdx].relatedUnits = val;
     s.relatedUnits = val;
+    saveSessionsLocal();
     scheduleCloudSync();
   }
 }
@@ -2596,8 +2681,9 @@ function addTechVocabItem(secIdx) {
   if (s && s.sections && s.sections[secIdx]) {
     if (!s.sections[secIdx].techVocab) s.sections[secIdx].techVocab = [];
     s.sections[secIdx].techVocab.push({ word: '', meaning: '', techContext: '' });
+    saveSessionsLocal();
     renderSectionsTiles();
-    autoSaveNote();
+    scheduleCloudSync();
   }
 }
 
@@ -2605,6 +2691,8 @@ function updateTechVocabItem(secIdx, itemIdx, field, val) {
   const s = sessions.find(x => x.session === activeSessionId);
   if (s && s.sections && s.sections[secIdx] && s.sections[secIdx].techVocab && s.sections[secIdx].techVocab[itemIdx]) {
     s.sections[secIdx].techVocab[itemIdx][field] = val;
+    saveSessionsLocal();
+    setSaveBadge('🟡 Đang đồng bộ...', '#f59e0b');
     scheduleCloudSync();
   }
 }
@@ -2613,8 +2701,9 @@ function deleteTechVocabItem(secIdx, itemIdx) {
   const s = sessions.find(x => x.session === activeSessionId);
   if (s && s.sections && s.sections[secIdx] && s.sections[secIdx].techVocab) {
     s.sections[secIdx].techVocab.splice(itemIdx, 1);
+    saveSessionsLocal();
     renderSectionsTiles();
-    autoSaveNote();
+    scheduleCloudSync();
   }
 }
 
@@ -2623,8 +2712,9 @@ function insertBulletQuad(secIdx, field) {
   if (s && s.sections && s.sections[secIdx]) {
     const cur = s.sections[secIdx][field] || '';
     s.sections[secIdx][field] = cur + (cur ? '\n• ' : '• ');
+    saveSessionsLocal();
     renderSectionsTiles();
-    autoSaveNote();
+    scheduleCloudSync();
   }
 }
 
@@ -2639,6 +2729,8 @@ function updateSingleContent(secIdx, val) {
   const s = sessions.find(x => x.session === activeSessionId);
   if (s && s.sections && s.sections[secIdx]) {
     s.sections[secIdx].content = val;
+    saveSessionsLocal();
+    setSaveBadge('🟡 Đang đồng bộ...', '#f59e0b');
     scheduleCloudSync();
   }
 }
@@ -2676,7 +2768,15 @@ function triggerDictationSingle(idx) {
   rec.start();
 }
 
-// ── SAVE & SYNC ────────────────────────────────────────────
+// ── SAVE & SYNC (ROBUST SYSTEM) ────────────────────────────
+function setSaveBadge(text, color) {
+  const badge = document.getElementById('saveStatusIndicator');
+  if (badge) {
+    badge.textContent = text;
+    badge.style.color = color;
+  }
+}
+
 function autoSaveNote() {
   const s = sessions.find(x => x.session === activeSessionId);
   if (!s) return;
@@ -2689,7 +2789,14 @@ function autoSaveNote() {
   s.dateStr = document.getElementById('wDate').value;
 
   saveSessionsLocal();
+  setSaveBadge('🟡 Đang đồng bộ...', '#f59e0b');
   scheduleCloudSync();
+}
+
+function manualSaveNote() {
+  autoSaveNote();
+  syncCurrentToSupabase();
+  toast('💾 Đã lưu ghi chú thành công vào máy & đám mây!');
 }
 
 function scheduleCloudSync() {
@@ -2701,20 +2808,39 @@ async function syncCurrentToSupabase() {
   const s = sessions.find(x => x.session === activeSessionId);
   if (!s) return;
 
+  // Extract first PREP section data for backward-compatibility with older columns
+  let c1 = '', c2 = '', c3 = '', rec = '';
+  if (s.sections && s.sections[0]) {
+    c1 = s.sections[0].col1 || '';
+    c2 = s.sections[0].col2 || '';
+    c3 = s.sections[0].col3 || '';
+    rec = s.sections[0].recall || '';
+  }
+
   const payload = {
     title: `Buổi ${s.session}: ${s.title}`,
     skill: s.skill,
     status: s.status,
-    date: todayStr(),
+    date: s.dateStr || todayStr(),
     tags: JSON.stringify(['#prep', `#${s.skill.toLowerCase()}`]),
     cups: s.cups || 0,
+    col1: c1,
+    col2: c2,
+    col3: c3,
+    recall: rec,
     custom_sections: JSON.stringify(s.sections || [])
   };
 
   try {
-    await db.from('notes').upsert({ id: s.session, ...payload });
+    const { error } = await db.from('notes').upsert({ id: s.session, ...payload });
+    if (!error) {
+      setSaveBadge('🟢 Đã đồng bộ đám mây', '#00b074');
+    } else {
+      setSaveBadge('🟢 Đã lưu vào máy', '#00b074');
+      console.log('Supabase notice:', error);
+    }
   } catch (e) {
-    console.log('Supabase sync note:', e);
+    setSaveBadge('🟢 Đã lưu vào máy (Offline)', '#00b074');
   }
 }
 
@@ -2872,6 +2998,11 @@ function closeModal(id) {
 
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', (e) => { if (e.target === o) o.classList.remove('active'); });
+});
+
+// Save instantly when closing / reloading browser tab
+window.addEventListener('beforeunload', () => {
+  saveSessionsLocal();
 });
 
 function escapeHTML(str) {
