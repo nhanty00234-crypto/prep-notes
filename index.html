@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>PREP Study Plan — IELTS Nền tảng & Lập trình</title>
-<meta name="description" content="Dashboard Study Plan học tiếng Anh thông minh chuẩn PREP.vn, tối ưu 100% cho điện thoại và máy tính, tích hợp từ khóa ngữ cảnh lập trình, đánh giá độ khó 1-5 sao, tự động lưu vĩnh viễn.">
+<meta name="description" content="Dashboard Study Plan học tiếng Anh thông minh chuẩn PREP.vn, tối ưu 100% cho điện thoại và máy tính, đồng bộ đám mây Supabase thời gian thực.">
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2160,22 +2160,27 @@ async function initStudyPlan() {
 
   renderDashboard();
 
-  // 3. Background: Sync and merge from Supabase without destroying unsaved local changes
+  // 3. Background: Sync from Supabase matching by session_no or title
   try {
     const { data, error } = await db.from('notes').select('*');
     if (!error && data && data.length) {
       let hasSupabaseUpdate = false;
       data.forEach(n => {
-        const idx = sessions.findIndex(s => s.session === n.id || s.title === n.title);
+        // match by session_no or title
+        const targetSession = n.session_no || (n.title.match(/Buổi (\d+)/) ? parseInt(n.title.match(/Buổi (\d+)/)[1], 10) : null);
+        const idx = sessions.findIndex(s => s.session === targetSession || s.title === n.title || s.session === n.id);
+        
         if (idx !== -1) {
-          // If local has no sections but Supabase has saved sections, restore from Supabase
           const supaSections = safeJSON(n.custom_sections);
+          // If local has no sections but Supabase has saved sections, restore from Supabase
           if ((!sessions[idx].sections || sessions[idx].sections.length === 0) && supaSections.length > 0) {
             sessions[idx].sections = supaSections;
             hasSupabaseUpdate = true;
           }
           if (n.cups !== undefined) sessions[idx].cups = n.cups;
           if (n.status) sessions[idx].status = n.status;
+          if (n.difficulty) sessions[idx].difficulty = n.difficulty;
+          if (n.related_units) sessions[idx].relatedUnits = n.related_units;
         }
       });
       if (hasSupabaseUpdate) {
@@ -2598,6 +2603,7 @@ function createTodaySection() {
   };
 
   s.sections.push(newSec);
+  saveSessionsLocal();
   renderSectionsTiles();
   autoSaveNote();
   toast('✨ Đã tạo Section mới!');
@@ -2618,6 +2624,7 @@ function deleteSection(idx) {
   if (!confirm(`Bạn có chắc muốn xoá Section "${s.sections[idx].title}"?`)) return;
 
   s.sections.splice(idx, 1);
+  saveSessionsLocal();
   renderSectionsTiles();
   autoSaveNote();
   toast('🗑️ Đã xoá Section');
@@ -2629,6 +2636,7 @@ function deleteAllSections() {
   if (!confirm('Bạn có chắc muốn xoá TOÀN BỘ Section trong buổi học này?')) return;
 
   s.sections = [];
+  saveSessionsLocal();
   renderSectionsTiles();
   autoSaveNote();
   toast('🗑️ Đã dọn sạch toàn bộ Section');
@@ -2647,7 +2655,7 @@ function updateQuadField(secIdx, field, val) {
   const s = sessions.find(x => x.session === activeSessionId);
   if (s && s.sections && s.sections[secIdx]) {
     s.sections[secIdx][field] = val;
-    saveSessionsLocal(); // ALWAYS SAVE TO LOCAL STORAGE IMMEDIATELY
+    saveSessionsLocal(); // Always write to localStorage immediately
     setSaveBadge('🟡 Đang đồng bộ...', '#f59e0b');
     scheduleCloudSync();
   }
@@ -2768,7 +2776,7 @@ function triggerDictationSingle(idx) {
   rec.start();
 }
 
-// ── SAVE & SYNC (ROBUST SYSTEM) ────────────────────────────
+// ── SAVE & SYNC (ROBUST 2-WAY PERSISTENCE) ─────────────────
 function setSaveBadge(text, color) {
   const badge = document.getElementById('saveStatusIndicator');
   if (badge) {
@@ -2818,12 +2826,15 @@ async function syncCurrentToSupabase() {
   }
 
   const payload = {
+    session_no: s.session,
     title: `Buổi ${s.session}: ${s.title}`,
     skill: s.skill,
     status: s.status,
     date: s.dateStr || todayStr(),
     tags: JSON.stringify(['#prep', `#${s.skill.toLowerCase()}`]),
     cups: s.cups || 0,
+    difficulty: s.difficulty || 0,
+    related_units: s.relatedUnits || '',
     col1: c1,
     col2: c2,
     col3: c3,
@@ -2832,12 +2843,25 @@ async function syncCurrentToSupabase() {
   };
 
   try {
-    const { error } = await db.from('notes').upsert({ id: s.session, ...payload });
-    if (!error) {
-      setSaveBadge('🟢 Đã đồng bộ đám mây', '#00b074');
+    // 1. Check if note already exists for this session
+    const { data: existing, error: errFind } = await db.from('notes').select('id').eq('session_no', s.session).maybeSingle();
+
+    if (!errFind && existing && existing.id) {
+      // Update existing record
+      const { error: errUp } = await db.from('notes').update(payload).eq('id', existing.id);
+      if (!errUp) {
+        setSaveBadge('🟢 Đã đồng bộ đám mây', '#00b074');
+      } else {
+        setSaveBadge('🟢 Đã lưu vào máy', '#00b074');
+      }
     } else {
-      setSaveBadge('🟢 Đã lưu vào máy', '#00b074');
-      console.log('Supabase notice:', error);
+      // Insert new record
+      const { error: errIns } = await db.from('notes').insert(payload);
+      if (!errIns) {
+        setSaveBadge('🟢 Đã đồng bộ đám mây', '#00b074');
+      } else {
+        setSaveBadge('🟢 Đã lưu vào máy', '#00b074');
+      }
     }
   } catch (e) {
     setSaveBadge('🟢 Đã lưu vào máy (Offline)', '#00b074');
