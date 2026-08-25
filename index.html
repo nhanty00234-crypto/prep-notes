@@ -1046,19 +1046,26 @@ button, input, select, textarea {
 
 .note-meta-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 8px;
 }
 .meta-chip-box {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
   background: var(--bg-app);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 6px 10px;
   font-size: 12px;
+  min-width: 0;
+}
+.meta-chip-box span {
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 .meta-chip-box select, .meta-chip-box input {
   border: none;
@@ -1068,6 +1075,10 @@ button, input, select, textarea {
   outline: none;
   cursor: pointer;
   text-align: right;
+  color: var(--text-main);
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
 }
 
 /* ─── SECTION TILES & EXPANDABLE LIST ────────────────────── */
@@ -2263,19 +2274,25 @@ async function fetchFromSupabase(showNotification = false) {
 
       // If active session workspace is currently open, refresh inputs and section tiles
       if (activeSessionId) {
-        const curS = sessions.find(s => s.session === activeSessionId);
-        if (curS) {
-          const titleEl = document.getElementById('wTitle');
-          const skillEl = document.getElementById('wSkill');
-          const cupsEl = document.getElementById('wCups');
-          const statusEl = document.getElementById('wStatus');
-          const dateEl = document.getElementById('wDate');
-          if (titleEl && !document.activeElement?.isSameNode(titleEl)) titleEl.value = `Buổi ${curS.session}: ${curS.title}`;
-          if (skillEl) skillEl.value = curS.skill || 'Pronunciation';
-          if (cupsEl) cupsEl.value = String(curS.cups || 0);
-          if (statusEl) statusEl.value = curS.status || 'draft';
-          if (dateEl) dateEl.value = curS.dateStr || '';
-          renderSectionsTiles();
+        const isEditingWorkspace = (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) ||
+          (Date.now() - (lastFocusedState.timestamp || 0) < 15000);
+
+        // Only re-render if user is not actively typing or focused in the workspace
+        if (!isEditingWorkspace) {
+          const curS = sessions.find(s => s.session === activeSessionId);
+          if (curS) {
+            const titleEl = document.getElementById('wTitle');
+            const skillEl = document.getElementById('wSkill');
+            const cupsEl = document.getElementById('wCups');
+            const statusEl = document.getElementById('wStatus');
+            const dateEl = document.getElementById('wDate');
+            if (titleEl && !document.activeElement?.isSameNode(titleEl)) titleEl.value = `Buổi ${curS.session}: ${curS.title}`;
+            if (skillEl) skillEl.value = curS.skill || 'Pronunciation';
+            if (cupsEl) cupsEl.value = String(curS.cups || 0);
+            if (statusEl) statusEl.value = curS.status || 'draft';
+            if (dateEl) dateEl.value = curS.dateStr || '';
+            renderSectionsTiles();
+          }
         }
       }
 
@@ -2302,7 +2319,78 @@ function manualFetchFromSupabase() {
   fetchFromSupabase(true);
 }
 
-// ── REALTIME & EVENT LISTENERS ─────────────────────────────
+// ── REALTIME & FOCUS RESTORATION (ALT+TAB UX FIX) ────────────
+let lastFocusedState = {
+  selector: null,
+  element: null,
+  selectionStart: null,
+  selectionEnd: null,
+  activeSession: null,
+  timestamp: 0
+};
+
+function saveCurrentFocusState(el = document.activeElement) {
+  if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA')) return;
+  try {
+    let selector = null;
+    if (el.id) {
+      selector = '#' + el.id;
+    } else if (el.dataset && el.dataset.sec !== undefined && el.dataset.field) {
+      selector = `[data-sec="${el.dataset.sec}"][data-field="${el.dataset.field}"]`;
+    } else if (el.dataset && el.dataset.sec !== undefined && el.dataset.vocabIdx !== undefined && el.dataset.vocabField) {
+      selector = `[data-sec="${el.dataset.sec}"][data-vocab-idx="${el.dataset.vocabIdx}"][data-vocab-field="${el.dataset.vocabField}"]`;
+    } else if (el.className) {
+      const cls = el.className.trim().split(/\s+/)[0];
+      if (cls) selector = '.' + cls;
+    }
+
+    lastFocusedState = {
+      element: el,
+      selector: selector,
+      selectionStart: typeof el.selectionStart === 'number' ? el.selectionStart : null,
+      selectionEnd: typeof el.selectionEnd === 'number' ? el.selectionEnd : null,
+      activeSession: activeSessionId,
+      timestamp: Date.now()
+    };
+  } catch (e) {}
+}
+
+function restoreLastFocus() {
+  if (!lastFocusedState || !lastFocusedState.selector) return;
+
+  // If already focused in an input/textarea, keep native focus
+  if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+    return;
+  }
+
+  let el = null;
+  if (lastFocusedState.element && document.body.contains(lastFocusedState.element)) {
+    el = lastFocusedState.element;
+  } else if (lastFocusedState.selector) {
+    el = document.querySelector(lastFocusedState.selector);
+  }
+
+  if (el && typeof el.focus === 'function') {
+    try {
+      el.focus({ preventScroll: true });
+      if (typeof lastFocusedState.selectionStart === 'number' && typeof lastFocusedState.selectionEnd === 'number') {
+        el.setSelectionRange(lastFocusedState.selectionStart, lastFocusedState.selectionEnd);
+      }
+    } catch (e) {}
+  }
+}
+
+// Global focus and cursor position listeners
+document.addEventListener('focusin', (e) => saveCurrentFocusState(e.target), true);
+document.addEventListener('input', (e) => saveCurrentFocusState(e.target), true);
+document.addEventListener('keyup', (e) => saveCurrentFocusState(e.target), true);
+document.addEventListener('mouseup', (e) => saveCurrentFocusState(e.target), true);
+document.addEventListener('selectionchange', () => {
+  if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+    saveCurrentFocusState(document.activeElement);
+  }
+});
+
 function setupSupabaseRealtime() {
   try {
     db.channel('prep_notes_realtime')
@@ -2316,12 +2404,19 @@ function setupSupabaseRealtime() {
   }
 }
 
-// Auto re-sync when switching back to tab or unlocking mobile phone
+// Auto re-sync & seamlessly restore focus when Alt+Tabbing back or unlocking phone
 window.addEventListener('focus', () => {
+  restoreLastFocus();
+  setTimeout(restoreLastFocus, 20);
+  setTimeout(restoreLastFocus, 80);
   fetchFromSupabase(false);
 });
+
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
+    restoreLastFocus();
+    setTimeout(restoreLastFocus, 20);
+    setTimeout(restoreLastFocus, 80);
     fetchFromSupabase(false);
   }
 });
@@ -2508,6 +2603,7 @@ function openSessionDetail(sessionId) {
 
 // ── RENDER SECTIONS TILES & ACCORDION ──────────────────────
 function renderSectionsTiles() {
+  saveCurrentFocusState();
   const container = document.getElementById('sectionsListContainer');
   const s = sessions.find(x => x.session === activeSessionId);
   if (!container || !s) return;
@@ -2533,7 +2629,7 @@ function renderSectionsTiles() {
         <div class="section-tile-header" onclick="toggleSectionTile(${idx})">
           <div class="tile-title-group">
             <span class="tile-arrow">▶</span>
-            <input type="text" class="tile-title-input" value="${escapeHTML(sec.title || `Section ${idx + 1}`)}" placeholder="Tên section..." onclick="event.stopPropagation()" oninput="updateSecTitle(${idx}, this.value)">
+            <input type="text" class="tile-title-input" data-sec="${idx}" data-field="title" value="${escapeHTML(sec.title || `Section ${idx + 1}`)}" placeholder="Tên section..." onclick="event.stopPropagation()" oninput="updateSecTitle(${idx}, this.value)">
           </div>
 
           <div class="tile-meta-info" onclick="event.stopPropagation()">
@@ -2564,6 +2660,8 @@ function renderSectionsTiles() {
       </button>
     </div>
   `;
+
+  restoreLastFocus();
 }
 
 // ── RENDER FULL PREP SECTION CONTENT ───────────────────────
@@ -2584,7 +2682,7 @@ function renderSectionBodyContent(sec, idx) {
               <button class="mini-tool-btn" onclick="speakTextQuad(${idx}, 'col1')">🔊 Đọc</button>
             </div>
           </div>
-          <textarea class="quad-textarea" placeholder="1. Kiến thức cốt lõi 1&#10;2. Kiến thức cốt lõi 2..." oninput="updateQuadField(${idx}, 'col1', this.value)">${escapeHTML(sec.col1 || '')}</textarea>
+          <textarea class="quad-textarea" data-sec="${idx}" data-field="col1" placeholder="1. Kiến thức cốt lõi 1&#10;2. Kiến thức cốt lõi 2..." oninput="updateQuadField(${idx}, 'col1', this.value)">${escapeHTML(sec.col1 || '')}</textarea>
         </div>
 
         <div class="quad-box c2">
@@ -2595,7 +2693,7 @@ function renderSectionBodyContent(sec, idx) {
               <button class="mini-tool-btn" onclick="speakTextQuad(${idx}, 'col2')">🔊 Đọc</button>
             </div>
           </div>
-          <textarea class="quad-textarea" placeholder="Góc nhìn cá nhân bạn tự nhận ra..." oninput="updateQuadField(${idx}, 'col2', this.value)">${escapeHTML(sec.col2 || '')}</textarea>
+          <textarea class="quad-textarea" data-sec="${idx}" data-field="col2" placeholder="Góc nhìn cá nhân bạn tự nhận ra..." oninput="updateQuadField(${idx}, 'col2', this.value)">${escapeHTML(sec.col2 || '')}</textarea>
         </div>
 
         <div class="quad-box c3">
@@ -2606,7 +2704,7 @@ function renderSectionBodyContent(sec, idx) {
               <button class="mini-tool-btn" onclick="speakTextQuad(${idx}, 'col3')">🔊 Đọc</button>
             </div>
           </div>
-          <textarea class="quad-textarea" placeholder="1-2 câu ví dụ bạn đã áp dụng thực tế..." oninput="updateQuadField(${idx}, 'col3', this.value)">${escapeHTML(sec.col3 || '')}</textarea>
+          <textarea class="quad-textarea" data-sec="${idx}" data-field="col3" placeholder="1-2 câu ví dụ bạn đã áp dụng thực tế..." oninput="updateQuadField(${idx}, 'col3', this.value)">${escapeHTML(sec.col3 || '')}</textarea>
         </div>
 
         <div class="quad-box c4">
@@ -2616,7 +2714,7 @@ function renderSectionBodyContent(sec, idx) {
               <button class="mini-tool-btn" onclick="insertBulletQuad(${idx}, 'recall')">• Bullet</button>
             </div>
           </div>
-          <textarea class="quad-textarea" placeholder="Đóng bài học lại → Tự gõ những gì nhớ được..." oninput="updateQuadField(${idx}, 'recall', this.value)">${escapeHTML(sec.recall || '')}</textarea>
+          <textarea class="quad-textarea" data-sec="${idx}" data-field="recall" placeholder="Đóng bài học lại → Tự gõ những gì nhớ được..." oninput="updateQuadField(${idx}, 'recall', this.value)">${escapeHTML(sec.recall || '')}</textarea>
         </div>
       </div>
 
@@ -2636,7 +2734,7 @@ function renderSectionBodyContent(sec, idx) {
 
         <div class="related-units-wrapper">
           <span class="related-label">🔗 Unit liên quan:</span>
-          <input type="text" class="related-input" value="${escapeHTML(sec.relatedUnits || '')}" placeholder="Ví dụ: Buổi 1, Buổi 5..." oninput="updateSecRelatedUnits(${idx}, this.value)">
+          <input type="text" class="related-input" data-sec="${idx}" data-field="relatedUnits" value="${escapeHTML(sec.relatedUnits || '')}" placeholder="Ví dụ: Buổi 1, Buổi 5..." oninput="updateSecRelatedUnits(${idx}, this.value)">
         </div>
       </div>
 
@@ -2668,15 +2766,15 @@ function renderSectionBodyContent(sec, idx) {
                 <tr>
                   <td>
                     <div style="display:flex; align-items:center; gap:4px;">
-                      <input type="text" class="v-input" value="${escapeHTML(item.word || '')}" placeholder="Từ / Cụm / Âm..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'word', this.value)">
+                      <input type="text" class="v-input" data-sec="${idx}" data-vocab-idx="${itemIdx}" data-vocab-field="word" value="${escapeHTML(item.word || '')}" placeholder="Từ / Cụm / Âm..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'word', this.value)">
                       <button class="mini-tool-btn" style="font-size:14px;" onclick="speakText('${escapeJS(item.word)}')">🔊</button>
                     </div>
                   </td>
                   <td>
-                    <input type="text" class="v-input" value="${escapeHTML(item.meaning || '')}" placeholder="Nghĩa tiếng Việt..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'meaning', this.value)">
+                    <input type="text" class="v-input" data-sec="${idx}" data-vocab-idx="${itemIdx}" data-vocab-field="meaning" value="${escapeHTML(item.meaning || '')}" placeholder="Nghĩa tiếng Việt..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'meaning', this.value)">
                   </td>
                   <td>
-                    <input type="text" class="v-input" value="${escapeHTML(item.techContext || '')}" placeholder="Ngữ cảnh trong code..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'techContext', this.value)">
+                    <input type="text" class="v-input" data-sec="${idx}" data-vocab-idx="${itemIdx}" data-vocab-field="techContext" value="${escapeHTML(item.techContext || '')}" placeholder="Ngữ cảnh trong code..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'techContext', this.value)">
                   </td>
                   <td style="text-align:center;">
                     <button class="mini-tool-btn" onclick="deleteTechVocabItem(${idx}, ${itemIdx})">✕</button>
@@ -2701,7 +2799,7 @@ function renderSectionBodyContent(sec, idx) {
       <button class="mini-tool-btn" onclick="triggerDictationSingle(${idx})">🎙️ Micro nói</button>
       <button class="mini-tool-btn" onclick="speakText(document.querySelectorAll('.single-note-textarea')[${idx}]?.value)">🔊 Nghe phát âm</button>
     </div>
-    <textarea class="single-note-textarea" placeholder="Nhập nội dung chi tiết của section này tại đây..." oninput="updateSingleContent(${idx}, this.value)">${escapeHTML(sec.content || '')}</textarea>
+    <textarea class="single-note-textarea" data-sec="${idx}" data-field="content" placeholder="Nhập nội dung chi tiết của section này tại đây..." oninput="updateSingleContent(${idx}, this.value)">${escapeHTML(sec.content || '')}</textarea>
   `;
 }
 
