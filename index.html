@@ -1479,6 +1479,12 @@ button, input, select, textarea {
   border-color: var(--prep-blue);
   background: var(--bg-surface);
 }
+.v-input-ipa {
+  font-size: 11.5px;
+  color: var(--prep-blue);
+  font-weight: 600;
+  font-family: var(--font-mono), var(--font-main);
+}
 
 .btn-add-vocab-row {
   align-self: flex-start;
@@ -2250,7 +2256,7 @@ async function fetchFromSupabase(showNotification = false) {
               recall: n.recall || '',
               difficulty: n.difficulty || 0,
               relatedUnits: n.related_units || '',
-              techVocab: Array.isArray(legacyKw) ? legacyKw.map(k => ({ word: k.word || '', meaning: k.meaning || '', techContext: k.note || '' })) : [],
+              techVocab: Array.isArray(legacyKw) ? legacyKw.map(k => ({ word: k.word || '', ipa: k.ipa || '', meaning: k.meaning || '', techContext: k.note || k.techContext || '' })) : [],
               isOpen: true
             }];
           }
@@ -2451,7 +2457,7 @@ function renderDashboard() {
     if (activeTimeTab === 'today' && !s.isToday) return false;
     if (!q) return true;
 
-    const sectionsText = (s.sections || []).map(sec => `${sec.title} ${sec.content || ''} ${sec.col1 || ''} ${(sec.techVocab || []).map(tv => `${tv.word} ${tv.meaning} ${tv.techContext}`).join(' ')}`).join(' ');
+    const sectionsText = (s.sections || []).map(sec => `${sec.title} ${sec.content || ''} ${sec.col1 || ''} ${(sec.techVocab || []).map(tv => `${tv.word} ${tv.ipa || ''} ${tv.meaning} ${tv.techContext}`).join(' ')}`).join(' ');
     const full = `buổi ${s.session} ${s.title} ${s.skill} ${s.month} ${s.dateStr} ${sectionsText}`.toLowerCase();
     return full.includes(q);
   });
@@ -2753,22 +2759,26 @@ function renderSectionBodyContent(sec, idx) {
           <table class="v-table">
             <thead>
               <tr>
-                <th style="width: 28%;">Từ / Âm</th>
-                <th style="width: 30%;">Nghĩa tiếng Việt</th>
-                <th style="width: 37%;">Ngữ cảnh dùng trong lập trình</th>
+                <th style="width: 23%;">Từ / Âm</th>
+                <th style="width: 15%;">IPA</th>
+                <th style="width: 27%;">Nghĩa tiếng Việt</th>
+                <th style="width: 30%;">Ngữ cảnh dùng trong lập trình</th>
                 <th style="width: 5%;"></th>
               </tr>
             </thead>
             <tbody>
               ${techVocab.length === 0 ? `
-                <tr><td colspan="4" style="text-align:center; padding:12px; color:var(--text-muted); font-size:12px;">Chưa có từ khoá. Bấm <strong>"+ Thêm từ khoá mới"</strong> bên dưới!</td></tr>
+                <tr><td colspan="5" style="text-align:center; padding:12px; color:var(--text-muted); font-size:12px;">Chưa có từ khoá. Bấm <strong>"+ Thêm từ khoá mới"</strong> bên dưới!</td></tr>
               ` : techVocab.map((item, itemIdx) => `
                 <tr>
                   <td>
                     <div style="display:flex; align-items:center; gap:4px;">
-                      <input type="text" class="v-input" data-sec="${idx}" data-vocab-idx="${itemIdx}" data-vocab-field="word" value="${escapeHTML(item.word || '')}" placeholder="Từ / Cụm / Âm..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'word', this.value)">
+                      <input type="text" class="v-input" data-sec="${idx}" data-vocab-idx="${itemIdx}" data-vocab-field="word" value="${escapeHTML(item.word || '')}" placeholder="Từ / Cụm / Âm..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'word', this.value)" onblur="autoFetchIPA(this, ${idx}, ${itemIdx})">
                       <button class="mini-tool-btn" style="font-size:14px;" onclick="speakText('${escapeJS(item.word)}')">🔊</button>
                     </div>
+                  </td>
+                  <td>
+                    <input type="text" class="v-input v-input-ipa" data-sec="${idx}" data-vocab-idx="${itemIdx}" data-vocab-field="ipa" value="${escapeHTML(item.ipa || '')}" placeholder="IPA (VD: /.../)" oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'ipa', this.value)">
                   </td>
                   <td>
                     <input type="text" class="v-input" data-sec="${idx}" data-vocab-idx="${itemIdx}" data-vocab-field="meaning" value="${escapeHTML(item.meaning || '')}" placeholder="Nghĩa tiếng Việt..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'meaning', this.value)">
@@ -2818,7 +2828,7 @@ function createTodaySection() {
     difficulty: 0,
     relatedUnits: '',
     techVocab: [
-      { word: '', meaning: '', techContext: '' }
+      { word: '', ipa: '', meaning: '', techContext: '' }
     ],
     isOpen: true
   };
@@ -2909,10 +2919,50 @@ function addTechVocabItem(secIdx) {
   const s = sessions.find(x => x.session === activeSessionId);
   if (s && s.sections && s.sections[secIdx]) {
     if (!s.sections[secIdx].techVocab) s.sections[secIdx].techVocab = [];
-    s.sections[secIdx].techVocab.push({ word: '', meaning: '', techContext: '' });
+    s.sections[secIdx].techVocab.push({ word: '', ipa: '', meaning: '', techContext: '' });
     saveSessionsLocal();
     renderSectionsTiles();
     scheduleCloudSync();
+  }
+}
+
+async function autoFetchIPA(inputEl, secIdx, itemIdx) {
+  const rawWord = (inputEl.value || '').trim();
+  if (!rawWord) return;
+
+  // Xử lý từ tìm kiếm: lấy từ hợp lệ, bỏ dấu ngoặc, khoảng trắng thừa
+  const cleanWord = rawWord.replace(/^[^\w]+|[^\w]+$/g, '').toLowerCase();
+  if (!cleanWord) return;
+
+  try {
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      let ipa = data[0].phonetic || '';
+      if (!ipa && Array.isArray(data[0].phonetics)) {
+        const found = data[0].phonetics.find(p => p.text && p.text.trim());
+        if (found) ipa = found.text.trim();
+      }
+
+      if (ipa) {
+        // Cập nhật vào data model
+        const s = sessions.find(x => x.session === activeSessionId);
+        if (s && s.sections && s.sections[secIdx] && s.sections[secIdx].techVocab && s.sections[secIdx].techVocab[itemIdx]) {
+          s.sections[secIdx].techVocab[itemIdx].ipa = ipa;
+          saveSessionsLocal();
+          scheduleCloudSync();
+        }
+        // Cập nhật trực tiếp vào ô input DOM tương ứng
+        const ipaInput = document.querySelector(`input[data-sec="${secIdx}"][data-vocab-idx="${itemIdx}"][data-vocab-field="ipa"]`);
+        if (ipaInput) {
+          ipaInput.value = ipa;
+        }
+      }
+    }
+  } catch (err) {
+    // Không báo lỗi khi từ không có trong từ điển hoặc mất mạng
+    console.warn('Free Dictionary API lookup failed silently:', err);
   }
 }
 
