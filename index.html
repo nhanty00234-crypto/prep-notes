@@ -2,9 +2,9 @@
 <html lang="vi" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>PREP Study Plan — IELTS Nền tảng & Lập trình</title>
-<meta name="description" content="Dashboard Study Plan học tiếng Anh thông minh chuẩn PREP.vn, tích hợp từ khóa ngữ cảnh lập trình, đánh giá độ khó 1-5 sao, liên kết unit.">
+<meta name="description" content="Dashboard Study Plan học tiếng Anh thông minh chuẩn PREP.vn, tối ưu 100% cho điện thoại và máy tính, tích hợp từ khóa ngữ cảnh lập trình, đánh giá độ khó 1-5 sao.">
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -155,7 +155,7 @@
 }
 
 /* ─── BASE RESET ─────────────────────────────────────────── */
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body {
   height: 100%;
   font-family: var(--font-main);
@@ -163,9 +163,13 @@ html, body {
   color: var(--text-main);
   font-size: 14px;
   line-height: 1.5;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
 }
-button, input, select, textarea { font-family: inherit; color: inherit; }
+button, input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+  font-size: inherit;
+}
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -177,9 +181,10 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  position: relative;
 }
 
-/* ─── LEFT NAVIGATION ICON RAIL ──────────────────────────── */
+/* ─── LEFT NAVIGATION ICON RAIL (DESKTOP) ────────────────── */
 .nav-rail {
   width: var(--nav-rail-w);
   background: var(--bg-surface);
@@ -258,6 +263,47 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   border-radius: 0 4px 4px 0;
 }
 
+/* ─── MOBILE BOTTOM NAVIGATION BAR ───────────────────────── */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  z-index: 90;
+  align-items: center;
+  justify-content: space-around;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.mob-nav-btn {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.mob-nav-btn.active {
+  color: var(--prep-blue);
+}
+.mob-nav-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* ─── MAIN CONTENT AREA ──────────────────────────────────── */
 .main-view-container {
   flex: 1;
@@ -272,8 +318,8 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .prep-header {
   background: linear-gradient(90deg, #0068f6 0%, #0056cc 100%);
   color: #ffffff;
-  padding: 0 24px;
-  height: 60px;
+  padding: 0 20px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -285,7 +331,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .prep-logo-text {
@@ -304,14 +350,15 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-full);
-  padding: 5px 14px;
-  font-size: 12.5px;
+  padding: 4px 12px;
+  font-size: 12px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   cursor: pointer;
   transition: background 0.15s;
+  white-space: nowrap;
 }
 .prep-program-pill:hover {
   background: rgba(255, 255, 255, 0.28);
@@ -320,25 +367,25 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .streak-pill {
   background: rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-full);
-  padding: 4px 12px;
-  font-size: 13px;
+  padding: 4px 10px;
+  font-size: 12.5px;
   font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .header-icon-btn {
   background: rgba(255, 255, 255, 0.15);
   border: none;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   color: #fff;
   display: flex;
@@ -352,8 +399,8 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 }
 
 .user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid #fff;
   background: #ffcc00;
@@ -361,7 +408,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13px;
   color: #333;
 }
 
@@ -369,24 +416,25 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .plan-sub-header {
   background: var(--prep-blue);
   color: #ffffff;
-  padding: 0 28px 16px;
+  padding: 0 24px 14px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   flex-shrink: 0;
+  gap: 12px;
 }
 
 .plan-title-box h2 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   letter-spacing: -0.3px;
 }
 .plan-title-box .plan-subtitle {
-  font-size: 12.5px;
-  opacity: 0.85;
+  font-size: 12px;
+  opacity: 0.88;
   margin-top: 2px;
 }
 
@@ -395,14 +443,15 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: var(--radius-full);
   color: #fff;
-  padding: 6px 16px;
-  font-size: 12.5px;
+  padding: 5px 14px;
+  font-size: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .btn-track-list:hover {
   background: rgba(255, 255, 255, 0.28);
@@ -412,18 +461,18 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .dashboard-scroll-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 28px;
+  padding: 20px 24px 80px;
   display: flex;
-  gap: 24px;
+  gap: 20px;
 }
 
-/* Main Timeline Grid (Left 74%) */
+/* Main Timeline Grid */
 .timeline-main-area {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* Filter Controls Toolbar */
@@ -431,11 +480,11 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 12px 18px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
   box-shadow: var(--shadow-card);
 }
@@ -451,9 +500,9 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .tab-btn {
   border: none;
   background: transparent;
-  padding: 6px 18px;
+  padding: 6px 16px;
   border-radius: var(--radius-full);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--text-muted);
   cursor: pointer;
@@ -468,16 +517,16 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .search-and-filters {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex: 1;
   justify-content: flex-end;
 }
 .dash-search-input {
-  padding: 7px 12px 7px 32px;
+  padding: 8px 12px 8px 32px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border);
   background: var(--bg-app);
-  font-size: 12.5px;
+  font-size: 13px;
   outline: none;
   width: 220px;
   transition: all 0.2s;
@@ -493,7 +542,8 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 2px 0;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 .skill-chips-row::-webkit-scrollbar { display: none; }
@@ -508,6 +558,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.15s;
+  flex-shrink: 0;
 }
 .dash-chip:hover {
   background: var(--bg-hover);
@@ -524,8 +575,8 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .month-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .month-divider {
@@ -533,7 +584,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   align-items: center;
   justify-content: center;
   position: relative;
-  margin: 10px 0 6px;
+  margin: 8px 0 4px;
 }
 .month-divider::before {
   content: '';
@@ -551,8 +602,8 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
-  padding: 4px 18px;
-  font-size: 12.5px;
+  padding: 4px 16px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--text-muted);
   letter-spacing: -0.2px;
@@ -563,7 +614,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .sessions-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 12px;
 }
 
 /* PREP Card Item */
@@ -575,7 +626,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 140px;
+  min-height: 135px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
@@ -585,6 +636,9 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   transform: translateY(-2px);
   box-shadow: var(--shadow-hover);
   border-color: var(--prep-blue-border);
+}
+.session-card:active {
+  transform: scale(0.985);
 }
 
 /* Card States */
@@ -612,10 +666,10 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .session-badge-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
+  gap: 4px;
+  padding: 3px 9px;
   border-radius: var(--radius-full);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 800;
   background: #e2e8f0;
   color: #475569;
@@ -630,18 +684,18 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 }
 
 .session-date-label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--text-main);
 }
 
 .card-trophy {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--warning);
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
 }
 .card-trophy.empty {
   color: var(--text-light);
@@ -673,14 +727,14 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   align-items: center;
   justify-content: space-between;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 /* PREP Skill Tags */
 .prep-skill-tag {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 2px 9px;
+  padding: 2px 8px;
   border-radius: var(--radius-full);
   display: inline-flex;
   align-items: center;
@@ -711,7 +765,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 
 /* ─── RIGHT SIDEBAR (PROGRESS & MASCOT) ─────────────────── */
 .dashboard-sidebar-right {
-  width: 320px;
+  width: 310px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -722,11 +776,11 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: var(--bg-surface);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  padding: 20px;
+  padding: 18px;
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .widget-header {
@@ -735,12 +789,12 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   justify-content: space-between;
 }
 .widget-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--text-main);
 }
 .btn-reschedule {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--prep-blue);
   background: transparent;
@@ -752,13 +806,13 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-muted);
 }
 .metric-val {
   font-weight: 800;
   color: var(--text-main);
-  font-size: 14px;
+  font-size: 13.5px;
 }
 
 .trophy-total-val {
@@ -775,7 +829,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: var(--bg-app);
   border-radius: 10px;
   overflow: hidden;
-  margin: 4px 0;
+  margin: 3px 0;
 }
 .progress-fill {
   height: 100%;
@@ -789,7 +843,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 12px;
 }
 .stat-bullet {
   display: flex;
@@ -818,7 +872,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .mascot-banner {
   background: linear-gradient(135deg, #0068f6 0%, #0088ff 100%);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 18px;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -829,16 +883,16 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   box-shadow: 0 8px 24px rgba(0, 104, 246, 0.25);
 }
 .mascot-text {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.4;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   position: relative;
   z-index: 2;
 }
 .mascot-svg-wrap {
-  width: 130px;
-  height: 110px;
+  width: 120px;
+  height: 100px;
   position: relative;
   z-index: 2;
 }
@@ -850,7 +904,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   height: 100%;
   background: var(--bg-app);
   overflow-y: auto;
-  padding: 24px 32px 60px;
+  padding: 20px 24px 90px;
 }
 
 .note-workspace-container {
@@ -859,7 +913,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* Workspace Top Navigation */
@@ -868,25 +922,27 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   align-items: center;
   justify-content: space-between;
   background: var(--bg-surface);
-  padding: 14px 20px;
+  padding: 12px 18px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-card);
+  gap: 10px;
 }
 
 .btn-back-plan {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 6px;
+  padding: 8px 14px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border);
   background: var(--bg-app);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--text-main);
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .btn-back-plan:hover {
   background: var(--prep-blue);
@@ -897,7 +953,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .workspace-actions-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 /* Note Header Card */
@@ -905,15 +961,15 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: var(--bg-surface);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  padding: 20px 24px;
+  padding: 16px 20px;
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .note-title-edit {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   border: none;
   outline: none;
@@ -923,20 +979,20 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 }
 
 .note-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
 }
 .meta-chip-box {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
   background: var(--bg-app);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 5px 10px;
-  font-size: 12.5px;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 .meta-chip-box select, .meta-chip-box input {
   border: none;
@@ -945,13 +1001,14 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   font-size: 12px;
   outline: none;
   cursor: pointer;
+  text-align: right;
 }
 
 /* ─── SECTION TILES & EXPANDABLE LIST ────────────────────── */
 .sections-list-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 /* Initial Empty State: Clean with ONLY create button */
@@ -959,34 +1016,34 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: var(--bg-surface);
   border: 2px dashed var(--border);
   border-radius: var(--radius-lg);
-  padding: 48px 24px;
+  padding: 36px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 16px;
+  gap: 14px;
 }
 .clean-empty-icon {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: var(--prep-blue-light);
   color: var(--prep-blue);
-  font-size: 28px;
+  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .clean-empty-box h3 {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--text-main);
 }
 .clean-empty-box p {
   color: var(--text-muted);
-  max-width: 420px;
-  font-size: 13.5px;
+  max-width: 380px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -994,9 +1051,9 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: linear-gradient(135deg, #0068f6 0%, #0056cc 100%);
   color: #ffffff;
   border: none;
-  padding: 12px 28px;
+  padding: 12px 24px;
   border-radius: var(--radius-full);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(0, 104, 246, 0.3);
@@ -1005,9 +1062,8 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   gap: 8px;
   transition: all 0.2s;
 }
-.btn-create-today-sec:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 104, 246, 0.4);
+.btn-create-today-sec:active {
+  transform: scale(0.97);
 }
 
 /* Section Tile Item (Collapsible / Expandable) */
@@ -1025,7 +1081,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 }
 
 .section-tile-header {
-  padding: 14px 20px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1033,6 +1089,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   user-select: none;
   background: var(--bg-surface);
   transition: background 0.15s;
+  gap: 8px;
 }
 .section-tile-header:hover {
   background: var(--bg-hover);
@@ -1045,8 +1102,9 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .tile-title-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex: 1;
+  min-width: 0;
 }
 .tile-arrow {
   width: 22px;
@@ -1059,6 +1117,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   font-size: 10px;
   color: var(--text-muted);
   transition: transform 0.2s;
+  flex-shrink: 0;
 }
 .section-tile-card.is-open .tile-arrow {
   transform: rotate(90deg);
@@ -1067,7 +1126,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 }
 
 .tile-title-input {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   border: none;
   outline: none;
@@ -1075,17 +1134,19 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   color: var(--prep-blue);
   cursor: text;
   flex: 1;
+  min-width: 0;
 }
 
 .tile-meta-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 .badge-sec-tag {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: var(--radius-full);
   background: var(--bg-app);
   color: var(--text-muted);
@@ -1096,12 +1157,12 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   border: none;
   color: var(--text-light);
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 4px 6px;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 11.5px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   transition: all 0.15s;
 }
 .btn-del-sec:hover {
@@ -1111,10 +1172,10 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 
 /* Expanded Detail Body */
 .section-tile-body {
-  padding: 22px;
+  padding: 16px;
   display: none;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   background: var(--bg-card);
 }
 .section-tile-card.is-open .section-tile-body {
@@ -1125,17 +1186,17 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .prep-quad-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 12px;
 }
 
 .quad-box {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .quad-box.c1 { background: #f0f6ff; border-color: #bfdbfe; }
 .quad-box.c2 { background: #f0fdf4; border-color: #bbf7d0; }
@@ -1153,11 +1214,11 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   justify-content: space-between;
 }
 .quad-name {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 .c1 .quad-name { color: #1d4ed8; }
 .c2 .quad-name { color: #15803d; }
@@ -1173,7 +1234,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 3px 6px;
+  padding: 4px 8px;
   border-radius: 4px;
   font-size: 11.5px;
   color: var(--text-muted);
@@ -1185,25 +1246,25 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 
 .quad-textarea {
   width: 100%;
-  min-height: 105px;
+  min-height: 95px;
   border: none;
   background: transparent;
   outline: none;
   resize: vertical;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
-/* ─── NEW: DIFFICULTY RATING & RELATED UNITS BAR ─────────── */
+/* ─── DIFFICULTY RATING & RELATED UNITS BAR ─────────────── */
 .meta-review-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 12px 18px;
+  padding: 12px 14px;
   flex-wrap: wrap;
 }
 
@@ -1213,29 +1274,30 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   gap: 8px;
 }
 .stars-label {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--text-main);
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 .star-icons-group {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 .star-btn {
   background: transparent;
   border: none;
-  font-size: 20px;
+  font-size: 24px;
   color: #cbd5e1;
   cursor: pointer;
   transition: transform 0.15s, color 0.15s;
   line-height: 1;
+  padding: 2px;
 }
-.star-btn:hover {
-  transform: scale(1.2);
+.star-btn:active {
+  transform: scale(1.3);
 }
 .star-btn.filled {
   color: #f59e0b;
@@ -1243,7 +1305,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 }
 
 .star-hint-text {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #d97706;
 }
@@ -1251,45 +1313,44 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .related-units-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
-  min-width: 240px;
+  min-width: 200px;
   justify-content: flex-end;
 }
 .related-label {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--text-main);
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   white-space: nowrap;
 }
 .related-input {
-  padding: 5px 10px;
+  padding: 6px 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-app);
-  font-size: 12.5px;
+  font-size: 12px;
   outline: none;
   flex: 1;
-  max-width: 280px;
-  transition: border-color 0.15s;
+  max-width: 260px;
 }
 .related-input:focus {
   border-color: var(--prep-blue);
   background: var(--bg-surface);
 }
 
-/* ─── NEW: TECH / PROGRAMMING VOCABULARY TABLE ───────────── */
+/* ─── TECH VOCABULARY CARD (RESPONSIVE TABLE / MOBILE CARDS) */
 .tech-vocab-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .tech-vocab-header {
@@ -1297,15 +1358,15 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px dashed var(--border-subtle);
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 .tech-vocab-title {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--text-main);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .table-responsive {
@@ -1318,7 +1379,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .v-table th {
   background: var(--bg-app);
   padding: 8px 10px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-muted);
   text-align: left;
@@ -1334,7 +1395,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: var(--bg-app);
   border-radius: var(--radius-sm);
   padding: 6px 8px;
-  font-size: 13px;
+  font-size: 12.5px;
   outline: none;
 }
 .v-input:focus {
@@ -1353,7 +1414,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: var(--prep-blue-light);
   color: var(--prep-blue);
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11.5px;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -1365,15 +1426,15 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 /* Single Rich Note Text Area */
 .single-note-textarea {
   width: 100%;
-  min-height: 130px;
+  min-height: 120px;
   border: 1px solid var(--border);
   background: var(--bg-surface);
   border-radius: var(--radius-md);
-  padding: 12px 14px;
+  padding: 10px 12px;
   outline: none;
   resize: vertical;
-  font-size: 13.5px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.5;
   font-family: inherit;
 }
 .single-note-textarea:focus {
@@ -1386,16 +1447,17 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
 }
 .btn-outline-add {
   border: 2px dashed var(--prep-blue-border);
   background: var(--bg-surface);
   border-radius: var(--radius-full);
-  padding: 10px 20px;
+  padding: 8px 16px;
   color: var(--prep-blue);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
@@ -1412,7 +1474,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(4px);
   z-index: 100;
   display: flex;
@@ -1431,20 +1493,20 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   background: var(--bg-surface);
   border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 540px;
-  padding: 24px;
+  max-width: 500px;
+  padding: 20px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 /* Flashcard Scene */
 .fc-scene {
   perspective: 1000px;
   width: 100%;
-  height: 260px;
+  height: 240px;
   cursor: pointer;
 }
 .fc-inner {
@@ -1461,7 +1523,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   inset: 0;
   backface-visibility: hidden;
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1475,38 +1537,112 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 /* Toast */
 .toast {
   position: fixed;
-  bottom: 24px;
+  bottom: 80px;
   left: 50%;
   transform: translateX(-50%) translateY(100px);
   background: #1e293b;
   color: #fff;
-  padding: 10px 20px;
+  padding: 9px 18px;
   border-radius: var(--radius-full);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   z-index: 999;
   opacity: 0;
   transition: all 0.3s;
+  white-space: nowrap;
 }
 .toast.show {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
 }
 
-/* Responsive */
+/* ─── MOBILE & RESPONSIVE BREAKPOINTS ────────────────────── */
 @media (max-width: 1024px) {
   .dashboard-scroll-body { flex-direction: column; }
   .dashboard-sidebar-right { width: 100%; }
   .sessions-grid { grid-template-columns: repeat(2, 1fr); }
   .prep-quad-grid { grid-template-columns: 1fr; }
 }
-@media (max-width: 680px) {
+
+@media (max-width: 768px) {
   .nav-rail { display: none; }
-  .sessions-grid { grid-template-columns: 1fr; }
-  .plan-sub-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .dashboard-scroll-body { padding: 16px 12px; }
-  .meta-review-bar { flex-direction: column; align-items: flex-start; }
+  .mobile-bottom-nav { display: flex; }
+  
+  .prep-header { padding: 0 14px; height: 52px; }
+  .prep-logo-text { font-size: 18px; }
+  .prep-program-pill { display: none; }
+  
+  .plan-sub-header {
+    padding: 0 16px 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .plan-title-box h2 { font-size: 18px; }
+  .btn-track-list { width: 100%; justify-content: center; }
+
+  .dashboard-scroll-body {
+    padding: 12px 14px 85px;
+    gap: 14px;
+  }
+  .dashboard-toolbar {
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .tab-group-buttons { width: 100%; }
+  .tab-btn { flex: 1; text-align: center; }
+  .search-and-filters { width: 100%; }
+  .dash-search-input { width: 100% !important; }
+
+  .sessions-grid { grid-template-columns: 1fr; gap: 10px; }
+  .session-card { padding: 12px 14px; min-height: 120px; }
+
+  .note-workspace-view {
+    padding: 12px 14px 95px;
+  }
+  .workspace-top-bar {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+  }
+  .note-info-card { padding: 14px; }
+  .note-title-edit { font-size: 16.5px; }
+  .note-meta-row { grid-template-columns: 1fr; }
+
+  .meta-review-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .related-units-wrapper { justify-content: flex-start; }
+  .related-input { max-width: 100%; width: 100%; }
+
+  /* Mobile Vocab Table Adaptations */
+  .v-table thead { display: none; }
+  .v-table, .v-table tbody, .v-table tr, .v-table td {
+    display: block;
+    width: 100%;
+  }
+  .v-table tr {
+    background: var(--bg-app);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .v-table td {
+    padding: 4px 0;
+    border-bottom: none;
+  }
+  .v-table td:last-child {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: auto;
+  }
 }
 </style>
 </head>
@@ -1514,7 +1650,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 
 <div class="app-layout">
 
-  <!-- ─── LEFT NAVIGATION RAIL ─────────────────────────────── -->
+  <!-- ─── LEFT NAVIGATION RAIL (DESKTOP) ───────────────────── -->
   <aside class="nav-rail">
     <button class="rail-logo-btn" title="PREP Logo">
       <div class="rail-logo-img">P</div>
@@ -1523,7 +1659,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
       <button class="rail-btn" onclick="showDashboardView()" title="Trang chủ">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       </button>
-      <button class="rail-btn active" onclick="showDashboardView()" title="Study Plan">
+      <button class="rail-btn active" id="deskStudyPlanBtn" onclick="showDashboardView()" title="Study Plan">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       </button>
       <button class="rail-btn" onclick="openFlashcards()" title="Flashcards ôn tập">
@@ -1535,6 +1671,30 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
     </div>
   </aside>
 
+  <!-- ─── MOBILE BOTTOM NAVIGATION BAR ─────────────────────── -->
+  <nav class="mobile-bottom-nav">
+    <button class="mob-nav-btn active" id="mobStudyBtn" onclick="showDashboardView()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Lộ trình</span>
+    </button>
+    <button class="mob-nav-btn" onclick="openFlashcards()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+      <span>Flashcards</span>
+    </button>
+    <button class="mob-nav-btn" onclick="togglePomodoro()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="mobPomoText">Pomodoro</span>
+    </button>
+    <button class="mob-nav-btn" onclick="openExportModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+      <span>Sao lưu</span>
+    </button>
+    <button class="mob-nav-btn" onclick="toggleTheme()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/></svg>
+      <span>Đổi nền</span>
+    </button>
+  </nav>
+
   <!-- ─── MAIN VIEW CONTAINER ──────────────────────────────── -->
   <div class="main-view-container">
 
@@ -1545,7 +1705,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
           <span>PREP</span>
         </a>
         <div class="prep-program-pill">
-          <span>✨ Chương trình bạn chọn: <strong>IELTS</strong> ▾</span>
+          <span>✨ <strong>IELTS</strong> ▾</span>
         </div>
       </div>
 
@@ -1555,10 +1715,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
           <span id="streakCount">0</span>
         </div>
         <button class="header-icon-btn" onclick="toggleTheme()" title="Đổi nền Sáng/Tối">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/></svg>
-        </button>
-        <button class="header-icon-btn" title="Thông báo">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/></svg>
         </button>
         <div class="user-avatar" title="Học viên">N</div>
       </div>
@@ -1567,11 +1724,11 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
     <!-- Sub-Header -->
     <div class="plan-sub-header">
       <div class="plan-title-box">
-        <h2>IELTS Nền tảng <span style="font-size: 16px; opacity: 0.8;">ℹ️</span></h2>
+        <h2>IELTS Nền tảng <span style="font-size: 15px; opacity: 0.8;">ℹ️</span></h2>
         <div class="plan-subtitle">Lộ trình học tập & ghi chép thông minh theo từng buổi học</div>
       </div>
       <button class="btn-track-list" onclick="toast('Lộ trình IELTS Nền tảng: 65 Buổi học')">
-        🧭 Xem danh sách chặng
+        🧭 Danh sách 65 buổi
       </button>
     </div>
 
@@ -1590,14 +1747,14 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 
           <div class="skill-chips-row" id="skillChipsRow">
             <button class="dash-chip active" onclick="filterBySkill('ALL')">Tất cả</button>
-            <button class="dash-chip" onclick="filterBySkill('Pronunciation')">🔊 Pronunciation</button>
-            <button class="dash-chip" onclick="filterBySkill('Vocabulary')">📝 Vocabulary</button>
-            <button class="dash-chip" onclick="filterBySkill('Grammar')">📐 Grammar</button>
-            <button class="dash-chip" onclick="filterBySkill('Listening')">🎧 Listening</button>
+            <button class="dash-chip" onclick="filterBySkill('Pronunciation')">🔊 Phát âm</button>
+            <button class="dash-chip" onclick="filterBySkill('Vocabulary')">📝 Từ vựng</button>
+            <button class="dash-chip" onclick="filterBySkill('Grammar')">📐 Ngữ pháp</button>
+            <button class="dash-chip" onclick="filterBySkill('Listening')">🎧 Luyện nghe</button>
           </div>
 
           <div class="search-and-filters">
-            <input type="text" class="dash-search-input" placeholder="🔍 Tìm bài học, buổi số..." oninput="handleDashSearch(this.value)">
+            <input type="text" class="dash-search-input" placeholder="🔍 Tìm bài học, buổi..." oninput="handleDashSearch(this.value)">
           </div>
         </div>
 
@@ -1615,7 +1772,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
         <div class="progress-widget-card">
           <div class="widget-header">
             <div class="widget-title">Tiến độ học</div>
-            <button class="btn-reschedule" onclick="toast('Lịch học chuẩn theo Study Plan của bạn')">Xếp lại lịch</button>
+            <button class="btn-reschedule" onclick="toast('Lịch học chuẩn theo Study Plan của bạn')">Lịch học</button>
           </div>
 
           <div class="metric-row">
@@ -1635,23 +1792,23 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
           <div class="progress-stats-list">
             <div class="stat-bullet">
               <span class="stat-bullet-dot"></span>
-              <span>Hoàn thành: <strong id="doneUnitsText">2/65</strong> Tổng số Units</span>
+              <span>Hoàn thành: <strong id="doneUnitsText">2/65</strong> Units</span>
             </div>
             <div class="stat-bullet">
               <span class="stat-bullet-dot plan"></span>
-              <span>Kế hoạch: <strong>3/65</strong> Tổng số Units</span>
+              <span>Kế hoạch: <strong>3/65</strong> Units</span>
             </div>
           </div>
 
           <div class="motivation-note" id="motivationText">
-            Bạn đang học chậm hơn kế hoạch. Phải cố gắng hơn nữa để đạt được mục tiêu đấy!
+            Bạn đang học theo kế hoạch. Cố gắng mỗi ngày đạt 3 cúp nhé!
           </div>
         </div>
 
         <!-- Motivation Banner with Mascot -->
         <div class="mascot-banner">
           <div class="mascot-text">
-            Ố! Hôm nay bạn có buổi cần hoàn thành. Cố gắng lên nào!
+            Hôm nay bạn có bài học cần hoàn thành. Bắt đầu ngay thôi!
           </div>
           <div class="mascot-svg-wrap">
             <svg viewBox="0 0 160 140" width="100%" height="100%">
@@ -1686,7 +1843,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
         <!-- Workspace Top Bar -->
         <div class="workspace-top-bar">
           <button class="btn-back-plan" onclick="showDashboardView()">
-            ← Quay lại Study Plan
+            ← Quay lại Lộ trình
           </button>
           
           <div class="workspace-actions-right">
@@ -1756,29 +1913,29 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 <div class="modal-overlay" id="flashcardModal">
   <div class="modal-content">
     <div style="display: flex; align-items: center; justify-content: space-between;">
-      <h3 style="font-size: 16px; font-weight: 800;">🎴 Ôn Tập Flashcard PREP & Lập Trình</h3>
+      <h3 style="font-size: 15px; font-weight: 800;">🎴 Ôn Tập Flashcard PREP</h3>
       <button class="mini-tool-btn" onclick="closeModal('flashcardModal')">✕</button>
     </div>
 
     <div class="fc-scene" onclick="flipCard()">
       <div class="fc-inner" id="fcInner">
         <div class="fc-front">
-          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;" id="fcSkillBadge">Vocabulary</div>
-          <div style="font-size: 26px; font-weight: 800; color: var(--prep-blue);" id="fcWord">determine</div>
-          <button class="mini-tool-btn" style="margin-top: 8px; font-size: 16px;" onclick="event.stopPropagation(); speakText(document.getElementById('fcWord').textContent)">🔊</button>
-          <div style="font-size: 11px; color: var(--text-light); margin-top: 14px;">💡 Bấm vào thẻ để xem nghĩa & ngữ cảnh lập trình</div>
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;" id="fcSkillBadge">Vocabulary</div>
+          <div style="font-size: 24px; font-weight: 800; color: var(--prep-blue);" id="fcWord">determine</div>
+          <button class="mini-tool-btn" style="margin-top: 8px; font-size: 18px;" onclick="event.stopPropagation(); speakText(document.getElementById('fcWord').textContent)">🔊</button>
+          <div style="font-size: 11px; color: var(--text-light); margin-top: 12px;">💡 Chạm vào thẻ để lật</div>
         </div>
         <div class="fc-back">
-          <div style="font-size: 20px; font-weight: 800; color: var(--success);" id="fcMeaning">xác định, quyết định</div>
-          <div style="font-size: 13px; color: var(--text-muted); margin-top: 6px; font-style: italic;" id="fcNote">Ngữ cảnh lập trình: Dùng khi tính toán điều kiện hàm</div>
-          <div style="font-size: 11px; color: var(--text-light); margin-top: 14px;">🔄 Bấm để lật lại</div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--success);" id="fcMeaning">xác định, quyết định</div>
+          <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 6px; font-style: italic;" id="fcNote">Ngữ cảnh: Dùng khi tính toán điều kiện hàm</div>
+          <div style="font-size: 11px; color: var(--text-light); margin-top: 12px;">🔄 Chạm để lật lại</div>
         </div>
       </div>
     </div>
 
     <div style="display: flex; align-items: center; justify-content: space-between;">
       <button class="btn-track-list" style="background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border);" onclick="prevCard()">← Thẻ trước</button>
-      <span style="font-size: 12.5px; font-weight: 700;" id="fcProgress">1 / 1</span>
+      <span style="font-size: 12px; font-weight: 700;" id="fcProgress">1 / 1</span>
       <button class="btn-track-list" style="background: var(--prep-blue); color: #fff;" onclick="nextCard()">Thẻ tiếp →</button>
     </div>
   </div>
@@ -1788,7 +1945,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 <div class="modal-overlay" id="exportModal">
   <div class="modal-content">
     <div style="display: flex; align-items: center; justify-content: space-between;">
-      <h3 style="font-size: 16px; font-weight: 800;">📦 Xuất & Sao Lưu Dữ Liệu Study Plan</h3>
+      <h3 style="font-size: 15px; font-weight: 800;">📦 Xuất & Sao Lưu Dữ Liệu</h3>
       <button class="mini-tool-btn" onclick="closeModal('exportModal')">✕</button>
     </div>
     <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -1796,10 +1953,10 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
         💾 Tải bản sao lưu toàn bộ (JSON Backup)
       </button>
       <button class="btn-track-list" style="justify-content: flex-start; padding: 12px; background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border);" onclick="window.print()">
-        🖨️ In ấn / Lưu Study Plan ra file PDF (A4)
+        🖨️ In ấn / Lưu ra file PDF (A4)
       </button>
-      <hr style="border: none; border-top: 1px solid var(--border); margin: 6px 0;">
-      <label style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Khôi phục từ file JSON sao lưu:</label>
+      <hr style="border: none; border-top: 1px solid var(--border); margin: 4px 0;">
+      <label style="font-size: 11.5px; font-weight: 700; color: var(--text-muted);">Khôi phục từ file JSON sao lưu:</label>
       <input type="file" id="importFileInput" accept=".json" onchange="importFromJSON(event)" style="font-size: 12px;">
     </div>
   </div>
@@ -1942,9 +2099,9 @@ async function initStudyPlan() {
       cups: s.cups || 0,
       isToday: s.isToday || false,
       noteStatus: s.noteStatus || '',
-      difficulty: 0, // 1 to 5 stars
-      relatedUnits: '', // e.g. "Buổi 1, Buổi 5"
-      sections: [] // Empty sections list by default
+      difficulty: 0,
+      relatedUnits: '',
+      sections: []
     }));
   }
 
@@ -2009,7 +2166,7 @@ function renderDashboard() {
 
   if (filtered.length === 0) {
     container.innerHTML = `
-      <div style="background: var(--bg-surface); padding: 32px; border-radius: var(--radius-lg); text-align: center; color: var(--text-muted); border: 1px solid var(--border);">
+      <div style="background: var(--bg-surface); padding: 24px; border-radius: var(--radius-lg); text-align: center; color: var(--text-muted); border: 1px solid var(--border);">
         🔍 Không tìm thấy bài học nào phù hợp với bộ lọc.
       </div>`;
   } else {
@@ -2023,7 +2180,6 @@ function renderDashboard() {
             const isDone = s.status === 'done' || s.cups === 3;
             const hasNote = (s.sections && s.sections.length > 0);
             
-            // Check if difficulty is set in any section or session
             let secStars = s.difficulty || 0;
             if (s.sections && s.sections.length) {
               const withDiff = s.sections.find(sec => sec.difficulty > 0);
@@ -2034,7 +2190,7 @@ function renderDashboard() {
             <div class="session-card ${isDone ? 'is-done' : ''} ${s.isToday ? 'is-today' : ''}" onclick="openSessionDetail(${s.session})">
               <div>
                 <div class="card-top-row">
-                  <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 6px;">
                     <span class="session-badge-pill">
                       Buổi ${s.session} ${isDone ? '✓' : (s.isToday ? '⏱️' : '')}
                     </span>
@@ -2056,9 +2212,9 @@ function renderDashboard() {
                 <div class="card-bottom-row">
                   <span class="prep-skill-tag ${s.skill}">${s.skill}</span>
                   <div style="display: flex; align-items: center; gap: 6px;">
-                    ${secStars > 0 ? `<span style="font-size: 11px; color: #f59e0b; font-weight: 800;" title="Độ khó ${secStars}/5 sao">★ ${secStars}/5</span>` : ''}
+                    ${secStars > 0 ? `<span style="font-size: 10.5px; color: #f59e0b; font-weight: 800;" title="Độ khó ${secStars}/5 sao">★ ${secStars}/5</span>` : ''}
                     <span class="note-indicator-dot ${hasNote ? 'has-note' : ''}" title="${hasNote ? 'Đã có ghi chú' : 'Chưa có ghi chú'}">
-                      ${hasNote ? `📝 ${s.sections.length} mục` : '○'}
+                      ${hasNote ? `📝 ${s.sections.length}` : '○'}
                     </span>
                   </div>
                 </div>
@@ -2118,6 +2274,9 @@ function filterByTimeTab(tab) {
 function showDashboardView() {
   document.getElementById('dashboardView').style.display = 'flex';
   document.getElementById('noteWorkspaceView').style.display = 'none';
+  document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+  const mobBtn = document.getElementById('mobStudyBtn');
+  if (mobBtn) mobBtn.classList.add('active');
   renderDashboard();
 }
 
@@ -2137,6 +2296,7 @@ function openSessionDetail(sessionId) {
   document.getElementById('wDate').value = s.dateStr || '';
 
   renderSectionsTiles();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ── RENDER SECTIONS TILES & ACCORDION ──────────────────────
@@ -2149,8 +2309,8 @@ function renderSectionsTiles() {
     container.innerHTML = `
       <div class="clean-empty-box">
         <div class="clean-empty-icon">📝</div>
-        <h3>Chưa có Section nào trong buổi học này</h3>
-        <p>Bấm nút bên dưới để tạo Section ghi chép đầy đủ 4 ô PREP, Bảng từ khoá lập trình, Đánh giá độ khó và Liên kết unit.</p>
+        <h3>Chưa có Section nào trong buổi này</h3>
+        <p>Bấm nút bên dưới để tạo Section ghi chép 4 ô PREP, Bảng từ khoá lập trình & Đánh giá sao.</p>
         <button class="btn-create-today-sec" onclick="createTodaySection()">
           <span>➕</span> Tạo Section Ngày Hôm Nay
         </button>
@@ -2170,10 +2330,10 @@ function renderSectionsTiles() {
           </div>
 
           <div class="tile-meta-info" onclick="event.stopPropagation()">
-            ${(sec.difficulty && sec.difficulty > 0) ? `<span style="color:#f59e0b; font-size:12px; font-weight:800;">${'★'.repeat(sec.difficulty)}${'☆'.repeat(5 - sec.difficulty)}</span>` : ''}
-            <span class="badge-sec-tag">${sec.type === 'prep_full' ? 'PREP + Tech Vocab' : (sec.type === 'vocab' ? 'Từ Vựng' : 'Ghi Chú')}</span>
+            ${(sec.difficulty && sec.difficulty > 0) ? `<span style="color:#f59e0b; font-size:11px; font-weight:800;">${'★'.repeat(sec.difficulty)}</span>` : ''}
+            <span class="badge-sec-tag">${sec.type === 'prep_full' ? 'PREP' : (sec.type === 'vocab' ? 'Từ Vựng' : 'Ghi Chú')}</span>
             <button class="btn-del-sec" onclick="deleteSection(${idx})" title="Xoá Section này">
-              🗑️ Xoá Section
+              🗑️ Xoá
             </button>
           </div>
         </div>
@@ -2192,18 +2352,18 @@ function renderSectionsTiles() {
         <span>➕</span> Thêm Section Mới
       </button>
       
-      <button class="btn-del-sec" style="color: var(--danger);" onclick="deleteAllSections()">
+      <button class="btn-del-sec" style="color: var(--danger); font-weight:700;" onclick="deleteAllSections()">
         🗑️ Xoá tất cả Section buổi này
       </button>
     </div>
   `;
 }
 
-// ── RENDER FULL PREP SECTION CONTENT + 3 NEW FEATURES ──────
+// ── RENDER FULL PREP SECTION CONTENT ───────────────────────
 function renderSectionBodyContent(sec, idx) {
   if (sec.type === 'prep_full' || !sec.type) {
     const stars = sec.difficulty || 0;
-    const starLabels = ['', '1⭐ Rất dễ', '2⭐ Dễ hiểu', '3⭐ Vừa phải', '4⭐ Khá khó (Cần ôn)', '5⭐ Rất khó (Cần ôn gấp)'];
+    const starLabels = ['', '1⭐ Rất dễ', '2⭐ Dễ hiểu', '3⭐ Vừa phải', '4⭐ Cần ôn', '5⭐ Rất khó (Ôn gấp)'];
     const techVocab = sec.techVocab || [];
 
     return `
@@ -2217,7 +2377,7 @@ function renderSectionBodyContent(sec, idx) {
               <button class="mini-tool-btn" onclick="speakTextQuad(${idx}, 'col1')">🔊 Đọc</button>
             </div>
           </div>
-          <textarea class="quad-textarea" placeholder="1. Kiến thức cốt lõi 1&#10;2. Kiến thức cốt lõi 2&#10;3. Điểm lưu ý quan trọng..." oninput="updateQuadField(${idx}, 'col1', this.value)">${escapeHTML(sec.col1 || '')}</textarea>
+          <textarea class="quad-textarea" placeholder="1. Kiến thức cốt lõi 1&#10;2. Kiến thức cốt lõi 2..." oninput="updateQuadField(${idx}, 'col1', this.value)">${escapeHTML(sec.col1 || '')}</textarea>
         </div>
 
         <div class="quad-box c2">
@@ -2228,7 +2388,7 @@ function renderSectionBodyContent(sec, idx) {
               <button class="mini-tool-btn" onclick="speakTextQuad(${idx}, 'col2')">🔊 Đọc</button>
             </div>
           </div>
-          <textarea class="quad-textarea" placeholder="Góc nhìn cá nhân bạn tự nhận ra khi áp dụng vào thực tế..." oninput="updateQuadField(${idx}, 'col2', this.value)">${escapeHTML(sec.col2 || '')}</textarea>
+          <textarea class="quad-textarea" placeholder="Góc nhìn cá nhân bạn tự nhận ra..." oninput="updateQuadField(${idx}, 'col2', this.value)">${escapeHTML(sec.col2 || '')}</textarea>
         </div>
 
         <div class="quad-box c3">
@@ -2239,7 +2399,7 @@ function renderSectionBodyContent(sec, idx) {
               <button class="mini-tool-btn" onclick="speakTextQuad(${idx}, 'col3')">🔊 Đọc</button>
             </div>
           </div>
-          <textarea class="quad-textarea" placeholder="1-2 câu ví dụ thực tế bạn đã áp dụng ngay hôm nay..." oninput="updateQuadField(${idx}, 'col3', this.value)">${escapeHTML(sec.col3 || '')}</textarea>
+          <textarea class="quad-textarea" placeholder="1-2 câu ví dụ bạn đã áp dụng thực tế..." oninput="updateQuadField(${idx}, 'col3', this.value)">${escapeHTML(sec.col3 || '')}</textarea>
         </div>
 
         <div class="quad-box c4">
@@ -2249,11 +2409,11 @@ function renderSectionBodyContent(sec, idx) {
               <button class="mini-tool-btn" onclick="insertBulletQuad(${idx}, 'recall')">• Bullet</button>
             </div>
           </div>
-          <textarea class="quad-textarea" placeholder="Đóng bài học lại → Tự gõ những gì bạn còn nhớ được..." oninput="updateQuadField(${idx}, 'recall', this.value)">${escapeHTML(sec.recall || '')}</textarea>
+          <textarea class="quad-textarea" placeholder="Đóng bài học lại → Tự gõ những gì nhớ được..." oninput="updateQuadField(${idx}, 'recall', this.value)">${escapeHTML(sec.recall || '')}</textarea>
         </div>
       </div>
 
-      <!-- TÍNH NĂNG 2 & 3: ĐÁNH GIÁ ĐỘ KHÓ 1-5 SAO & LIÊN KẾT UNIT LIÊN QUAN -->
+      <!-- ĐÁNH GIÁ ĐỘ KHÓ & LIÊN KẾT UNIT -->
       <div class="meta-review-bar">
         <div class="stars-rating-wrapper">
           <span class="stars-label">⭐ Độ khó (1–5 sao):</span>
@@ -2264,23 +2424,23 @@ function renderSectionBodyContent(sec, idx) {
               </button>
             `).join('')}
           </div>
-          <span class="star-hint-text">${starLabels[stars] || 'Chưa đánh giá'}</span>
+          <span class="star-hint-text">${starLabels[stars] || ''}</span>
         </div>
 
         <div class="related-units-wrapper">
-          <span class="related-label">🔗 Liên kết Unit liên quan:</span>
+          <span class="related-label">🔗 Unit liên quan:</span>
           <input type="text" class="related-input" value="${escapeHTML(sec.relatedUnits || '')}" placeholder="Ví dụ: Buổi 1, Buổi 5..." oninput="updateSecRelatedUnits(${idx}, this.value)">
         </div>
       </div>
 
-      <!-- TÍNH NĂNG 1: BẢNG TỪ KHÓA 3 CỘT (TỪ/ÂM - NGHĨA - NGỮ CẢNH DÙNG TRONG LẬP TRÌNH) -->
+      <!-- BẢNG TỪ KHÓA LẬP TRÌNH 3 CỘT (RESPONSIVE CHO MOBILE) -->
       <div class="tech-vocab-card">
         <div class="tech-vocab-header">
           <div class="tech-vocab-title">
-            <span>💻</span> Bảng Từ Khoá & Ngữ Cảnh Lập Trình (Coding Context)
+            <span>💻</span> Bảng Từ Khoá & Ngữ Cảnh Lập Trình
           </div>
           <button class="mini-tool-btn" style="color: var(--prep-blue); font-weight: 700;" onclick="openFlashcards()">
-            🎴 Ôn Flashcard từ khoá
+            🎴 Ôn Flashcard
           </button>
         </div>
 
@@ -2296,20 +2456,20 @@ function renderSectionBodyContent(sec, idx) {
             </thead>
             <tbody>
               ${techVocab.length === 0 ? `
-                <tr><td colspan="4" style="text-align:center; padding:14px; color:var(--text-muted); font-size:12.5px;">Chưa có từ khoá nào. Bấm <strong>"+ Thêm từ khoá mới"</strong> để lưu từ vựng chuyên ngành lập trình!</td></tr>
+                <tr><td colspan="4" style="text-align:center; padding:12px; color:var(--text-muted); font-size:12px;">Chưa có từ khoá. Bấm <strong>"+ Thêm từ khoá mới"</strong> bên dưới!</td></tr>
               ` : techVocab.map((item, itemIdx) => `
                 <tr>
                   <td>
                     <div style="display:flex; align-items:center; gap:4px;">
-                      <input type="text" class="v-input" value="${escapeHTML(item.word || '')}" placeholder="Ví dụ: determine / asynchronous" oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'word', this.value)">
-                      <button class="mini-tool-btn" onclick="speakText('${escapeJS(item.word)}')">🔊</button>
+                      <input type="text" class="v-input" value="${escapeHTML(item.word || '')}" placeholder="Từ / Cụm / Âm..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'word', this.value)">
+                      <button class="mini-tool-btn" style="font-size:14px;" onclick="speakText('${escapeJS(item.word)}')">🔊</button>
                     </div>
                   </td>
                   <td>
-                    <input type="text" class="v-input" value="${escapeHTML(item.meaning || '')}" placeholder="xác định / bất đồng bộ" oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'meaning', this.value)">
+                    <input type="text" class="v-input" value="${escapeHTML(item.meaning || '')}" placeholder="Nghĩa tiếng Việt..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'meaning', this.value)">
                   </td>
                   <td>
-                    <input type="text" class="v-input" value="${escapeHTML(item.techContext || '')}" placeholder="Ví dụ: async/await trong xử lý API response, promise..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'techContext', this.value)">
+                    <input type="text" class="v-input" value="${escapeHTML(item.techContext || '')}" placeholder="Ngữ cảnh trong code..." oninput="updateTechVocabItem(${idx}, ${itemIdx}, 'techContext', this.value)">
                   </td>
                   <td style="text-align:center;">
                     <button class="mini-tool-btn" onclick="deleteTechVocabItem(${idx}, ${itemIdx})">✕</button>
@@ -2329,7 +2489,7 @@ function renderSectionBodyContent(sec, idx) {
 
   // Custom text section
   return `
-    <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+    <div style="display: flex; gap: 6px; margin-bottom: 6px;">
       <button class="mini-tool-btn" onclick="insertBulletSingle(${idx})">• Thêm Bullet</button>
       <button class="mini-tool-btn" onclick="triggerDictationSingle(${idx})">🎙️ Micro nói</button>
       <button class="mini-tool-btn" onclick="speakText(document.querySelectorAll('.single-note-textarea')[${idx}]?.value)">🔊 Nghe phát âm</button>
@@ -2361,7 +2521,7 @@ function createTodaySection() {
   s.sections.push(newSec);
   renderSectionsTiles();
   autoSaveNote();
-  toast('✨ Đã tạo Section PREP mới thành công!');
+  toast('✨ Đã tạo Section mới!');
 }
 
 function toggleSectionTile(idx) {
@@ -2417,7 +2577,7 @@ function setSectionDifficulty(secIdx, stars) {
     s.difficulty = s.sections[secIdx].difficulty;
     renderSectionsTiles();
     autoSaveNote();
-    toast(`⭐ Đã cập nhật độ khó: ${s.sections[secIdx].difficulty}/5 sao`);
+    toast(`⭐ Đã chọn: ${s.sections[secIdx].difficulty}/5 sao`);
   }
 }
 
@@ -2572,6 +2732,7 @@ function togglePomodoro() {
   if (isPomoRunning) {
     clearInterval(pomoInterval);
     isPomoRunning = false;
+    document.getElementById('mobPomoText').textContent = 'Pomodoro';
     toast('⏸️ Đã tạm dừng Pomodoro');
   } else {
     isPomoRunning = true;
@@ -2593,12 +2754,13 @@ function togglePomodoro() {
       const min = String(pomoMinutes).padStart(2, '0');
       const sec = String(pomoSeconds).padStart(2, '0');
       document.getElementById('pomoTimerText').textContent = `${min}:${sec}`;
+      document.getElementById('mobPomoText').textContent = `${min}:${sec}`;
     }, 1000);
     toast('⏱️ Bắt đầu Pomodoro 25 phút');
   }
 }
 
-// ── FLASHCARDS REVIEW (INCLUDES TECH CONTEXT) ──────────────
+// ── FLASHCARDS REVIEW ──────────────────────────────────────
 function openFlashcards() {
   fcDeck = [];
   const s = sessions.find(x => x.session === activeSessionId);
@@ -2607,7 +2769,7 @@ function openFlashcards() {
     s.sections.forEach(sec => {
       (sec.techVocab || []).forEach(it => {
         if (it.word && it.word.trim()) {
-          fcDeck.push({ word: it.word, meaning: it.meaning, note: it.techContext ? `💻 Ngữ cảnh lập trình: ${it.techContext}` : '' });
+          fcDeck.push({ word: it.word, meaning: it.meaning, note: it.techContext ? `💻 Ngữ cảnh: ${it.techContext}` : '' });
         }
       });
     });
@@ -2618,7 +2780,7 @@ function openFlashcards() {
       (sess.sections || []).forEach(sec => {
         (sec.techVocab || []).forEach(it => {
           if (it.word && it.word.trim()) {
-            fcDeck.push({ word: it.word, meaning: it.meaning, note: it.techContext ? `💻 Ngữ cảnh lập trình: ${it.techContext}` : '' });
+            fcDeck.push({ word: it.word, meaning: it.meaning, note: it.techContext ? `💻 Ngữ cảnh: ${it.techContext}` : '' });
           }
         });
       });
@@ -2626,7 +2788,7 @@ function openFlashcards() {
   }
 
   if (!fcDeck.length) {
-    toast('⚠️ Chưa có từ khoá nào trong Bảng Từ Khoá Lập Trình.');
+    toast('⚠️ Chưa có từ khoá nào trong Bảng Từ Khoá.');
     return;
   }
 
@@ -2657,7 +2819,7 @@ function nextCard() {
     currentFcIndex++;
     updateFlashcardView();
   } else {
-    toast('🎉 Bạn đã hoàn thành toàn bộ thẻ Flashcard!');
+    toast('🎉 Bạn đã hoàn thành toàn bộ Flashcard!');
   }
 }
 
@@ -2681,7 +2843,7 @@ function exportAllToJSON() {
   a.download = `prep_study_plan_backup_${todayStr()}.json`;
   a.click();
   closeModal('exportModal');
-  toast('💾 Đã tải xuống file sao lưu toàn bộ Study Plan!');
+  toast('💾 Đã tải bản sao lưu!');
 }
 
 function importFromJSON(event) {
