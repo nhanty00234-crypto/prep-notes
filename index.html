@@ -2931,18 +2931,88 @@ function addTechVocabItem(secIdx) {
   }
 }
 
+// ── 3-LAYER IPA ENGINE: OFFLINE DICT -> CACHE -> API ───────
+let offlineIpaDict = null; // Lớp 1: Biến toàn cục lưu từ điển offline
+
+function getIpaCache() {
+  try {
+    return JSON.parse(localStorage.getItem('ipa_cache') || '{}') || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function setIpaCache(word, ipa) {
+  if (!word || !ipa) return;
+  try {
+    const cache = getIpaCache();
+    cache[word.toLowerCase().trim()] = ipa;
+    localStorage.setItem('ipa_cache', JSON.stringify(cache));
+  } catch (e) {}
+}
+
+async function loadOfflineIpaDict() {
+  const jsonUrl = 'https://raw.githubusercontent.com/open-dict-data/ipa-dict/master/data/en_US.json';
+  const txtUrl = 'https://raw.githubusercontent.com/open-dict-data/ipa-dict/master/data/en_US.txt';
+  
+  // 1. Thử fetch file JSON theo URL yêu cầu
+  try {
+    const res = await fetch(jsonUrl);
+    if (res.ok) {
+      offlineIpaDict = await res.json();
+      console.log('✅ IPA Offline Dict loaded (JSON)');
+      return;
+    }
+  } catch (e) {}
+
+  // 2. Fallback tải file từ điển chuẩn .txt của ipa-dict và parse sang Object
+  try {
+    const res2 = await fetch(txtUrl);
+    if (res2.ok) {
+      const text = await res2.text();
+      const map = {};
+      const lines = text.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const tabIdx = lines[i].indexOf('\t');
+        if (tabIdx !== -1) {
+          const w = lines[i].slice(0, tabIdx).trim().toLowerCase();
+          const ipa = lines[i].slice(tabIdx + 1).trim();
+          if (w && ipa) map[w] = ipa.split(',')[0].trim();
+        }
+      }
+      offlineIpaDict = map;
+      console.log('✅ IPA Offline Dict loaded (125k+ words)');
+    }
+  } catch (err) {
+    console.warn('⚠️ Could not load offline IPA dictionary:', err);
+  }
+}
+
 let ipaDebounceTimer = null;
 function debounceFetchIPA(inputEl, secIdx, itemIdx) {
   clearTimeout(ipaDebounceTimer);
   ipaDebounceTimer = setTimeout(() => {
     autoFetchIPA(inputEl, secIdx, itemIdx);
-  }, 600);
+  }, 350);
 }
 
 async function getSingleWordIPA(w) {
+  const clean = w.trim().toLowerCase().replace(/^[^\w]+|[^\w]+$/g, '');
+  if (!clean) return null;
+
+  // Lớp 1 — Offline dictionary: Tra trong biến toàn cục trước (nhanh nhất)
+  if (offlineIpaDict && offlineIpaDict[clean]) {
+    return offlineIpaDict[clean];
+  }
+
+  // Lớp 2 — Cache: Tra trong localStorage 'ipa_cache'
+  const cache = getIpaCache();
+  if (cache[clean]) {
+    return cache[clean];
+  }
+
+  // Lớp 3 — API fallback: Chỉ gọi Free Dictionary API khi không có ở Lớp 1 & Lớp 2
   try {
-    const clean = w.trim().replace(/^[^\w]+|[^\w]+$/g, '').toLowerCase();
-    if (!clean) return null;
     const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(clean)}`);
     if (!res.ok) return null;
     const data = await res.json();
@@ -2952,7 +3022,10 @@ async function getSingleWordIPA(w) {
         const found = data[0].phonetics.find(p => p.text && p.text.trim());
         if (found) ipa = found.text.trim();
       }
-      return ipa || null;
+      if (ipa) {
+        setIpaCache(clean, ipa);
+        return ipa;
+      }
     }
   } catch (e) {
     return null;
@@ -2963,6 +3036,7 @@ async function getSingleWordIPA(w) {
 async function fetchFullIPA(text) {
   const clean = text.trim();
   if (!clean) return '';
+
   // 1. Thử tra cứu nguyên chuỗi
   let direct = await getSingleWordIPA(clean);
   if (direct) return direct;
@@ -2973,7 +3047,9 @@ async function fetchFullIPA(text) {
     const results = await Promise.all(words.map(w => getSingleWordIPA(w)));
     const hasAny = results.some(r => r !== null);
     if (hasAny) {
-      return results.map((r, i) => r || words[i]).join(' ');
+      const fullIpa = results.map((r, i) => r || words[i]).join(' ');
+      setIpaCache(clean.toLowerCase(), fullIpa);
+      return fullIpa;
     }
   }
   return '';
@@ -3004,7 +3080,7 @@ async function autoFetchIPA(inputEl, secIdx, itemIdx) {
       }
     }
   } catch (err) {
-    console.warn('Free Dictionary API lookup failed silently:', err);
+    console.warn('IPA lookup error:', err);
   } finally {
     if (ipaInput && !ipaInput.value) {
       ipaInput.placeholder = 'IPA (VD: /.../)';
@@ -3017,7 +3093,7 @@ async function autoFillAllIPA(secIdx) {
   if (!s || !s.sections || !s.sections[secIdx] || !s.sections[secIdx].techVocab) return;
 
   const list = s.sections[secIdx].techVocab;
-  toast('⏳ Đang tự động tra phiên âm IPA cho bảng...');
+  toast('⏳ Đang tra phiên âm IPA...');
   let count = 0;
 
   for (let i = 0; i < list.length; i++) {
@@ -3410,6 +3486,7 @@ function toast(msg) {
 // ── INIT ───────────────────────────────────────────────────
 initTheme();
 initStudyPlan();
+loadOfflineIpaDict();
 </script>
 </body>
 </html>
